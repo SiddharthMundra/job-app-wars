@@ -1,0 +1,43 @@
+{
+  "rules": {
+    "counts": {
+      ".read": true,
+      "sid": {
+        ".write": true,
+        ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() || newData.val() === data.val() + 1 || newData.val() === data.val() - 1)"
+      },
+      "arnav": {
+        ".write": true,
+        ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() || newData.val() === data.val() + 1 || newData.val() === data.val() - 1)"
+      }
+    },
+    "audit": {
+      ".read": true,
+      "$entryId": {
+        ".write": "!data.exists()",
+        ".validate": "newData.hasChildren(['person', 'action', 'from', 'to', 'at', 'atIso'])",
+        "person": {
+          ".validate": "newData.val() === 'sid' || newData.val() === 'arnav'"
+        },
+        "action": {
+          ".validate": "newData.val() === 'plus' || newData.val() === 'minus'"
+        },
+        "from": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "to": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "at": {
+          ".validate": "newData.isNumber()"
+        },
+        "atIso": {
+          ".validate": "newData.isString()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

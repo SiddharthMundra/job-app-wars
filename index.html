@@ -65,10 +65,30 @@
           <h1 id="sid-name" class="side__name">Sid</h1>
           <p class="side__count" id="sid-count" aria-live="polite">0</p>
           <p class="side__unit">Apps sent</p>
-          <button type="button" class="hit-btn" id="sid-plus" data-person="sid">
-            <span class="hit-btn__plus">+</span>
-            <span class="hit-btn__text">Lap / Applied</span>
-          </button>
+          <div class="hit-row">
+            <button
+              type="button"
+              class="hit-btn hit-btn--minus"
+              id="sid-minus"
+              data-person="sid"
+              data-delta="-1"
+              aria-label="Remove one app for Sid"
+            >
+              <span class="hit-btn__plus">−</span>
+              <span class="hit-btn__text">Undo</span>
+            </button>
+            <button
+              type="button"
+              class="hit-btn"
+              id="sid-plus"
+              data-person="sid"
+              data-delta="1"
+              aria-label="Add one app for Sid"
+            >
+              <span class="hit-btn__plus">+</span>
+              <span class="hit-btn__text">Applied</span>
+            </button>
+          </div>
         </article>
 
         <div class="divider" aria-hidden="true">
@@ -83,10 +103,30 @@
           <h1 id="arnav-name" class="side__name">Arnav</h1>
           <p class="side__count" id="arnav-count" aria-live="polite">0</p>
           <p class="side__unit">Apps sent</p>
-          <button type="button" class="hit-btn" id="arnav-plus" data-person="arnav">
-            <span class="hit-btn__plus">+</span>
-            <span class="hit-btn__text">Lap / Applied</span>
-          </button>
+          <div class="hit-row">
+            <button
+              type="button"
+              class="hit-btn hit-btn--minus"
+              id="arnav-minus"
+              data-person="arnav"
+              data-delta="-1"
+              aria-label="Remove one app for Arnav"
+            >
+              <span class="hit-btn__plus">−</span>
+              <span class="hit-btn__text">Undo</span>
+            </button>
+            <button
+              type="button"
+              class="hit-btn"
+              id="arnav-plus"
+              data-person="arnav"
+              data-delta="1"
+              aria-label="Add one app for Arnav"
+            >
+              <span class="hit-btn__plus">+</span>
+              <span class="hit-btn__text">Applied</span>
+            </button>
+          </div>
         </article>
       </section>
     </main>

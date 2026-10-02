@@ -4,16 +4,21 @@ import {
   ref,
   onValue,
   runTransaction,
+  push,
+  set,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
 const config = window.APP_CONFIG || {};
 const LOCAL_KEY = "job-app-wars-counts";
+const LOCAL_AUDIT_KEY = "job-app-wars-audit";
 
 const els = {
   sidCount: document.getElementById("sid-count"),
   arnavCount: document.getElementById("arnav-count"),
   sidPlus: document.getElementById("sid-plus"),
+  sidMinus: document.getElementById("sid-minus"),
   arnavPlus: document.getElementById("arnav-plus"),
+  arnavMinus: document.getElementById("arnav-minus"),
   sidSide: document.querySelector(".side--sid"),
   arnavSide: document.querySelector(".side--arnav"),
   sidPos: document.querySelector(".side--sid .side__pos"),
@@ -126,32 +131,77 @@ function renderCounts() {
   } else {
     els.leadText.textContent = `Arnav in P1 by ${state.arnav - state.sid}. Sid buys if it sticks.`;
   }
+
+  updateButtonAvailability();
+}
+
+function updateButtonAvailability() {
+  if (!els.sidMinus || !els.arnavMinus) return;
+  els.sidMinus.disabled = state.busy || state.sid <= 0;
+  els.arnavMinus.disabled = state.busy || state.arnav <= 0;
+  els.sidPlus.disabled = state.busy;
+  els.arnavPlus.disabled = state.busy;
 }
 
 function setBusy(isBusy) {
   state.busy = isBusy;
-  els.sidPlus.disabled = isBusy;
-  els.arnavPlus.disabled = isBusy;
+  updateButtonAvailability();
 }
 
-async function notifyDiscord(person, newCount) {
+function auditEntry(person, action, from, to) {
+  return {
+    person,
+    action,
+    from,
+    to,
+    at: Date.now(),
+    atIso: new Date().toISOString(),
+  };
+}
+
+function writeLocalAudit(entry) {
+  try {
+    const raw = localStorage.getItem(LOCAL_AUDIT_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    list.push(entry);
+    localStorage.setItem(LOCAL_AUDIT_KEY, JSON.stringify(list.slice(-200)));
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function writeFirebaseAudit(entry) {
+  const auditRef = push(ref(state.db, "audit"));
+  await set(auditRef, entry);
+}
+
+async function notifyDiscord(person, newCount, action) {
   if (!isDiscordConfigured()) return;
 
   const name = person === "sid" ? config.names?.sid || "Sid" : config.names?.arnav || "Arnav";
-  const color = person === "sid" ? 0x3ecf8e : 0x5bb4ff;
+  const color = action === "minus" ? 0xff8f8f : person === "sid" ? 0xe10600 : 0x0090ff;
   const other = person === "sid" ? state.arnav : state.sid;
   const otherName = person === "sid" ? config.names?.arnav || "Arnav" : config.names?.sid || "Sid";
+  const verb = action === "minus" ? "undid an app" : "just sent another app";
 
   const payload = {
-    content: `**${name}** just sent another app.`,
+    content: `**${name}** ${verb}.`,
     embeds: [
       {
         title: "Job App Wars",
         description: `${name} is now at **${newCount}** applications.`,
         color,
         fields: [
-          { name: config.names?.sid || "Sid", value: String(person === "sid" ? newCount : state.sid), inline: true },
-          { name: config.names?.arnav || "Arnav", value: String(person === "arnav" ? newCount : state.arnav), inline: true },
+          {
+            name: config.names?.sid || "Sid",
+            value: String(person === "sid" ? newCount : state.sid),
+            inline: true,
+          },
+          {
+            name: config.names?.arnav || "Arnav",
+            value: String(person === "arnav" ? newCount : state.arnav),
+            inline: true,
+          },
           {
             name: "Gap",
             value:
@@ -184,41 +234,65 @@ async function notifyDiscord(person, newCount) {
   }
 }
 
-async function incrementLocal(person) {
-  const next = { sid: state.sid, arnav: state.arnav };
-  next[person] += 1;
+async function changeLocal(person, delta) {
+  const from = state[person];
+  const to = from + delta;
+  if (to < 0) return;
+
+  const next = { sid: state.sid, arnav: state.arnav, [person]: to };
   writeLocalCounts(next);
   state.sid = next.sid;
   state.arnav = next.arnav;
+
+  const action = delta > 0 ? "plus" : "minus";
+  writeLocalAudit(auditEntry(person, action, from, to));
   renderCounts();
-  await notifyDiscord(person, next[person]);
+  await notifyDiscord(person, to, action);
 }
 
-async function incrementFirebase(person) {
+async function changeFirebase(person, delta) {
   const personRef = ref(state.db, `counts/${person}`);
-  const result = await runTransaction(personRef, (current) => (Number(current) || 0) + 1);
+  let from = 0;
+  let to = 0;
 
-  if (!result.committed || !result.snapshot.exists()) {
+  const result = await runTransaction(personRef, (current) => {
+    from = Number(current) || 0;
+    to = from + delta;
+    if (to < 0) return from;
+    return to;
+  });
+
+  if (!result.committed) {
     throw new Error("Could not update count");
   }
 
-  state[person] = Number(result.snapshot.val()) || 0;
+  const committed = Number(result.snapshot.val()) || 0;
+  if (committed === from && delta < 0 && from === 0) {
+    showToast("Already at zero.");
+    return;
+  }
+
+  state[person] = committed;
+  const action = delta > 0 ? "plus" : "minus";
+  await writeFirebaseAudit(auditEntry(person, action, from, committed));
   renderCounts();
-  await notifyDiscord(person, state[person]);
+  await notifyDiscord(person, committed, action);
 }
 
-async function handleIncrement(person) {
+async function handleChange(person, delta) {
   if (state.busy) return;
+  if (delta < 0 && state[person] <= 0) return;
+
   setBusy(true);
   try {
     if (state.mode === "firebase") {
-      await incrementFirebase(person);
+      await changeFirebase(person, delta);
     } else {
-      await incrementLocal(person);
+      await changeLocal(person, delta);
     }
   } catch (error) {
     console.error(error);
-    showToast("Could not update the counter. Try again.");
+    showToast("Could not update the counter. Check Firebase rules.");
   } finally {
     setBusy(false);
   }
@@ -247,8 +321,16 @@ function initDealModal() {
 }
 
 function initButtons() {
-  els.sidPlus.addEventListener("click", () => handleIncrement("sid"));
-  els.arnavPlus.addEventListener("click", () => handleIncrement("arnav"));
+  const buttons = [els.sidPlus, els.sidMinus, els.arnavPlus, els.arnavMinus];
+  for (const button of buttons) {
+    if (!button) continue;
+    button.addEventListener("click", () => {
+      const person = button.dataset.person;
+      const delta = Number(button.dataset.delta);
+      if (!person || !Number.isFinite(delta) || delta === 0) return;
+      handleChange(person, delta);
+    });
+  }
 }
 
 function initFirebase() {
