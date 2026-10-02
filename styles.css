@@ -433,9 +433,16 @@ body {
 }
 
 .hit-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.55;
   cursor: not-allowed;
   transform: none;
+}
+
+.hit-btn--minus:disabled {
+  opacity: 0.7;
+  color: rgba(244, 244, 245, 0.55);
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .hit-btn__plus {
