@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job App Wars — Sid vs Arnav</title>
+    <meta
+      name="description"
+      content="Sid vs Arnav. Who applies to more jobs? Loser pays for drinks."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="track" aria-hidden="true">
+      <div class="track__asphalt"></div>
+      <div class="track__stripes"></div>
+      <div class="track__carbon"></div>
+    </div>
+
+    <header class="topbar">
+      <div class="topbar__left">
+        <span class="topbar__flag" aria-hidden="true"></span>
+        <p class="brand">Job App Wars</p>
+      </div>
+      <div
+        class="db-health"
+        id="db-health"
+        role="status"
+        aria-live="polite"
+        data-status="checking"
+      >
+        <span class="db-health__dot" aria-hidden="true"></span>
+        <span class="db-health__label" id="db-health-label">DB checking…</span>
+      </div>
+      <button type="button" class="deal-btn" id="deal-btn" aria-haspopup="dialog">
+        Deal
+      </button>
+    </header>
+
+    <main class="page">
+      <section class="hero-photo">
+        <p class="hero-photo__tag">Drivers · Season open</p>
+        <figure class="hero-photo__frame">
+          <img
+            src="assets/photo.jpg"
+            alt="Sid and Arnav"
+            class="hero-photo__img"
+          />
+          <span class="hero-photo__accent" aria-hidden="true"></span>
+        </figure>
+      </section>
+
+      <section class="arena" aria-label="Race standings">
+        <article class="side side--sid" aria-labelledby="sid-name">
+          <div class="side__meta">
+            <span class="side__pos">P1</span>
+            <span class="side__team">Garage A</span>
+          </div>
+          <h1 id="sid-name" class="side__name">Sid</h1>
+          <p class="side__count" id="sid-count" aria-live="polite">0</p>
+          <p class="side__unit">Apps sent</p>
+          <button type="button" class="hit-btn" id="sid-plus" data-person="sid">
+            <span class="hit-btn__plus">+</span>
+            <span class="hit-btn__text">Lap / Applied</span>
+          </button>
+        </article>
+
+        <div class="divider" aria-hidden="true">
+          <span class="divider__vs">VS</span>
+        </div>
+
+        <article class="side side--arnav" aria-labelledby="arnav-name">
+          <div class="side__meta">
+            <span class="side__pos">P2</span>
+            <span class="side__team">Garage B</span>
+          </div>
+          <h1 id="arnav-name" class="side__name">Arnav</h1>
+          <p class="side__count" id="arnav-count" aria-live="polite">0</p>
+          <p class="side__unit">Apps sent</p>
+          <button type="button" class="hit-btn" id="arnav-plus" data-person="arnav">
+            <span class="hit-btn__plus">+</span>
+            <span class="hit-btn__text">Lap / Applied</span>
+          </button>
+        </article>
+      </section>
+    </main>
+
+    <footer class="timing-board">
+      <p class="lead" id="lead-text">Dead heat — lights out when you apply.</p>
+      <p class="total">
+        Race total <span id="total-count">0</span>
+      </p>
+    </footer>
+
+    <dialog class="deal-modal" id="deal-modal" aria-labelledby="deal-title">
+      <div class="deal-modal__inner">
+        <p class="deal-modal__eyebrow">Race regulation</p>
+        <h2 id="deal-title" class="deal-modal__title">The Deal</h2>
+        <p class="deal-modal__body">
+          Whoever has fewer job apps when we meet buys the drinks.
+          No excuses. No “I forgot to click.” Screenshots optional. Honor required.
+        </p>
+        <button type="button" class="deal-modal__close" id="deal-close">
+          Lights out
+        </button>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="config.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
